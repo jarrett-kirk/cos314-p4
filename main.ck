@@ -28,39 +28,74 @@ class PluckedString
 
 PluckedString myString;
 
-
 // create our OSC receiver
-OscIn oin;
+OscRecv OSCin;
 // create our OSC message
 OscMsg msg;
-// use port 12345
-12345 => oin.port;
-// create an address in the receiver, expect an int and a float
-oin.addAddress( "/freq, f" );
-oin.addAddress( "/filter, f" );
+// use port 1235 (why not?? just has to match the port of the sender (set in the Max patch))
+1235 => OSCin.port;
+//start listening to OSC messages
+OSCin.listen();
 
+// here are the addresses we're listing to.
+// we create an "OscEvent" for each address, and assign it a name
+OSCin.event("/mySlider,i") @=> OscEvent slider_event; 
+OSCin.event("/myXY,ff") @=> OscEvent XY_event; 
+
+//setting up some global variables that can store the values from OSC messages
+int sliderVal;
+float X;
+float Y;
+
+spork~ receiveSlider();
+spork~ receiveXY();
 
 while(true)
 {
-    oin => now;
-    <<<"got message">>>;
-    
-    while( oin.recv(msg) )
+    //just passing time in the higher level while the sporked functions run
+    1::second => now;
+}
+
+fun void receiveSlider()
+{
+    // infinite event loop
+    while ( true )
     {
-        if (msg.address == "/freq")
-        {
-            float pitch;
-            int length;
-            msg.getFloat(0) => pitch;
-            500 => length;
-            spork~ myString.playNote(pitch, length::ms);
-        }
-        if (msg.address == "/filter")
-        {
-            float filt;
-            msg.getFloat(0) => filt;
-            myString.changeFilter(filt);
-            <<< "gotfilt" >>>;
+        // wait for event to arrive
+        slider_event => now;        
+        // grab the next message from the queue. 
+        while ( slider_event.nextMsg() != 0 )
+        { 
+            // getInt fetches the expected int (as indicated by "i")
+            slider_event.getInt() => sliderVal;
+            // print
+            <<< "got Slider (via OSC):", sliderVal >>>;
+            
+            myString.changeFilter(sliderVal);
         }
     }
 }
+
+fun void receiveXY()
+{
+    // infinite event loop
+    while ( true )
+    {
+        // wait for event to arrive
+        XY_event => now;
+        
+        //grab the next message from the queue
+        while ( XY_event.nextMsg()  != 0 )
+        { 
+            // getFloat fetches the expected floats (as indicated by "ff")
+            XY_event.getFloat() => X;
+            XY_event.getFloat() => Y;
+            // print
+            <<< "got XY (via OSC):", X, " ", Y >>>;   
+            
+            myString.changeFilter(Y);
+            spork~ myString.playNote(X, 1::week);        
+        }
+    }
+}
+
