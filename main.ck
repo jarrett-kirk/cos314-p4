@@ -1,3 +1,9 @@
+// ideas: 
+// ui for multiple notes at once: both notes can be changed, one raw note can be changed, the other note is changed based on a ratio
+// ui for modulation: dial or something to change the modulating frequency
+// ui for arpeggiation/rhythm changing: can change speeds/arpegiate the sound
+// ui for basic waveform change: sin, tri, sqr, etc.
+
 class PluckedString
 {
     BlitSaw s => ADSR e => LPF f=> dac;
