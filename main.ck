@@ -32,7 +32,7 @@ class PluckedString
 }
 
 
-PluckedString myString;
+PluckedString myStrings[5];
 
 // create our OSC receiver
 OscRecv OSCin;
@@ -46,12 +46,16 @@ OSCin.listen();
 // here are the addresses we're listing to.
 // we create an "OscEvent" for each address, and assign it a name
 OSCin.event("/mySlider,i") @=> OscEvent slider_event; 
-OSCin.event("/myXY,ff") @=> OscEvent XY_event; 
+OSCin.event("/myXY,ffffff") @=> OscEvent XY_event; 
 
 //setting up some global variables that can store the values from OSC messages
 int sliderVal;
 float X;
 float Y;
+float X1;
+float X2;
+float X3;
+float X4;
 
 spork~ receiveSlider();
 spork~ receiveXY();
@@ -77,7 +81,9 @@ fun void receiveSlider()
             // print
             <<< "got Slider (via OSC):", sliderVal >>>;
             
-            myString.changeFilter(sliderVal);
+            for (0 => int i; i < myStrings.cap(); i++) {
+                myStrings[i].changeFilter(sliderVal);
+            }
         }
     }
 }
@@ -93,14 +99,21 @@ fun void receiveXY()
         //grab the next message from the queue
         while ( XY_event.nextMsg()  != 0 )
         { 
-            // getFloat fetches the expected floats (as indicated by "ff")
+            // getFloat fetches the expected floats (as indicated by "ffffff")
             XY_event.getFloat() => X;
             XY_event.getFloat() => Y;
+            XY_event.getFloat() => X1;
+            XY_event.getFloat() => X2;
+            XY_event.getFloat() => X3;
+            XY_event.getFloat() => X4;
             // print
             <<< "got XY (via OSC):", X, " ", Y >>>;   
             
-            myString.changeFilter(Y);
-            spork~ myString.playNote(X, 1::week);        
+            [X, X1, X2, X3, X4] @=> float notes[];
+            for (0 => int i; i < myStrings.cap(); i++) {
+                myStrings[i].changeFilter(Y);
+                spork~ myStrings[i].playNote(notes[i], 1::week);
+            }   
         }
     }
 }
