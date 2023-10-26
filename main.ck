@@ -33,6 +33,7 @@ class PluckedString
 
 
 PluckedString myStrings[5];
+PluckedString myString;
 
 // create our OSC receiver
 OscRecv OSCin;
@@ -47,6 +48,7 @@ OSCin.listen();
 // we create an "OscEvent" for each address, and assign it a name
 OSCin.event("/mySlider,i") @=> OscEvent slider_event; 
 OSCin.event("/myXY,ffffff") @=> OscEvent XY_event; 
+OSCin.event("/myFreq,i") @=> OscEvent freq_event; 
 
 //setting up some global variables that can store the values from OSC messages
 int sliderVal;
@@ -56,9 +58,14 @@ float X1;
 float X2;
 float X3;
 float X4;
+int freq0;
+int freq1;
+int freq2;
+int freq3;
 
 spork~ receiveSlider();
 spork~ receiveXY();
+spork~ receiveFreq();
 
 while(true)
 {
@@ -118,3 +125,19 @@ fun void receiveXY()
     }
 }
 
+fun void receiveFreq()
+{
+    // infinite event loop
+    while ( true )
+    {
+        // wait for event to arrive
+        freq_event => now;       
+        // grab the next message from the queue. 
+        while ( freq_event.nextMsg() != 0 )
+        { 
+            // getInt fetches the expected int (as indicated by "i")
+            freq_event.getInt() => freq0;
+            if (freq0 != 0) { spork~ myString.playNote(freq0, 10::ms); }          
+        }
+    }
+}
