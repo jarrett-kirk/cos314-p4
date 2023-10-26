@@ -49,6 +49,8 @@ OSCin.listen();
 OSCin.event("/mySlider,i") @=> OscEvent slider_event; 
 OSCin.event("/myXY,ffffff") @=> OscEvent XY_event; 
 OSCin.event("/myFreq,i") @=> OscEvent freq_event; 
+OSCin.event("/high_sequence,i") @=> OscEvent high_seq_event;
+OSCin.event("/low_sequence,i") @=> OscEvent low_seq_event;
 
 //setting up some global variables that can store the values from OSC messages
 int sliderVal;
@@ -62,10 +64,14 @@ int freq0;
 int freq1;
 int freq2;
 int freq3;
+int high; // higher sequence
+int low; // lower sequence
 
 spork~ receiveSlider();
 spork~ receiveXY();
 spork~ receiveFreq();
+spork~ receiveHighSequence();
+spork~ receiveLowSequence();
 
 while(true)
 {
@@ -138,6 +144,40 @@ fun void receiveFreq()
             // getInt fetches the expected int (as indicated by "i")
             freq_event.getInt() => freq0;
             if (freq0 != 0) { spork~ myString.playNote(freq0, 10::ms); }          
+        }
+    }
+}
+
+fun void receiveHighSequence() 
+{
+    while ( true )
+    {
+        // wait for event to arrive
+        high_seq_event => now;
+        
+        //grab the next message from the queue
+        while ( high_seq_event.nextMsg()  != 0 )
+        { 
+            high_seq_event.getInt() => high;
+            
+            spork~ myString.playNote(high, 200::ms);
+        }
+    }
+}
+
+fun void receiveLowSequence() 
+{
+    while ( true )
+    {
+        // wait for event to arrive
+        low_seq_event => now;
+        
+        //grab the next message from the queue
+        while ( low_seq_event.nextMsg()  != 0 )
+        { 
+            low_seq_event.getInt() => low;
+            
+            spork~ myString.playNote(low, 200::ms);
         }
     }
 }
